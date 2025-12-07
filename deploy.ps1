@@ -1,6 +1,6 @@
-# 小高博客 - Cloudflare Workers 部署脚本 (PowerShell版)
+# 小高博客 - Cloudflare Workers 部署脚本 (官方Python WSGI适配器版)
 
-Write-Host "小高博客 - Cloudflare Workers 部署脚本" -ForegroundColor Green
+Write-Host "小高博客 - Cloudflare Workers 部署脚本 (官方Python WSGI适配器版)" -ForegroundColor Green
 Write-Host ""
 
 # 检查Node.js和npm是否已安装
@@ -26,11 +26,11 @@ try {
 
 Write-Host ""
 
-# 安装依赖
-Write-Host "安装依赖..." -ForegroundColor Yellow
-npm install
+# 安装最新wrangler
+Write-Host "安装最新wrangler..." -ForegroundColor Yellow
+npm install -g wrangler@latest
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "错误: 依赖安装失败" -ForegroundColor Red
+    Write-Host "错误: wrangler安装失败" -ForegroundColor Red
     Read-Host "按Enter键退出"
     exit 1
 }
@@ -39,7 +39,7 @@ Write-Host ""
 
 # 登录Cloudflare
 Write-Host "登录Cloudflare..." -ForegroundColor Yellow
-npx wrangler login
+wrangler login
 if ($LASTEXITCODE -ne 0) {
     Write-Host "错误: Cloudflare登录失败" -ForegroundColor Red
     Read-Host "按Enter键退出"
@@ -50,7 +50,7 @@ Write-Host ""
 
 # 部署到Cloudflare Workers
 Write-Host "部署到Cloudflare Workers..." -ForegroundColor Yellow
-npm run deploy
+wrangler deploy
 if ($LASTEXITCODE -ne 0) {
     Write-Host "错误: 部署失败" -ForegroundColor Red
     Read-Host "按Enter键退出"
@@ -59,4 +59,10 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "部署成功！" -ForegroundColor Green
+Write-Host ""
+Write-Host "注意事项：" -ForegroundColor Yellow
+Write-Host "1. 请在Cloudflare控制台创建D1数据库并更新wrangler.toml中的database_id"
+Write-Host "2. 使用schema.sql初始化数据库表"
+Write-Host "3. 如果需要会话管理，请在Cloudflare控制台创建KV存储并更新wrangler.toml中的id"
+Write-Host ""
 Read-Host "按Enter键退出"
