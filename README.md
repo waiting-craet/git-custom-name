@@ -1,123 +1,264 @@
-# 小高博客 - Cloudflare Workers 部署指南 (官方Python WSGI适配器版)
+# 博客项目 - Cloudflare Pages原生Python Functions版
 
-这是一个基于Flask的博客应用，已适配部署到Cloudflare Workers，使用官方Python WSGI适配器。
+这是一个使用Cloudflare Pages原生Python Functions部署的博客项目，无需依赖Flask框架或其他复杂的Web框架，直接在Cloudflare边缘运行时上处理请求。
+
+## 项目特点
+
+- 使用Cloudflare Pages原生Python Functions
+- 无需Flask框架，直接处理HTTP请求
+- 支持动态路由和参数解析
+- 部署简单，无需复杂的构建过程
+- 全球CDN加速，访问速度快
 
 ## 前置要求
 
-1. Node.js (≥18.x)
-2. Python (≥3.9)
-3. Cloudflare账号
-
-## 部署步骤
-
-### 1. 创建Cloudflare D1数据库
-
-1. 登录Cloudflare控制台
-2. 进入"Workers & Pages" > "D1"
-3. 点击"Create database"
-4. 创建名为"little-gao-db"的数据库
-5. 记录数据库ID
-
-### 2. 配置wrangler.toml
-
-编辑wrangler.toml文件，填入您的D1数据库ID：
-
-```toml
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "little-gao-db"
-database_id = "您的数据库ID"
-```
-
-### 3. 初始化数据库
-
-```bash
-# 创建数据库表
-wrangler d1 execute little-gao-db --file=./schema.sql
-```
-
-### 4. 部署应用
-
-#### 方法1：使用自动部署脚本
-
-Windows批处理：
-```bash
-deploy.bat
-```
-
-PowerShell：
-```powershell
-.\deploy.ps1
-```
-
-#### 方法2：手动部署
-
-```bash
-# 安装最新wrangler
-npm install -g wrangler@latest
-
-# 登录Cloudflare
-wrangler login
-
-# 部署到Cloudflare Workers
-wrangler deploy
-```
-
-## 本地开发
-
-```bash
-# 使用Python虚拟环境运行
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
+1. Git账号和仓库
+2. Cloudflare账号
+3. 基本的命令行操作知识
 
 ## 项目结构
 
 ```
 little-gao/
-├── worker.js              # Cloudflare Workers入口文件，包含Flask应用代码
-├── wrangler.toml          # Cloudflare Workers配置
-├── requirements.txt       # Python依赖
-├── schema.sql            # 数据库初始化脚本
-├── deploy.bat/deploy.ps1  # 部署脚本
-├── app.py                # 本地开发用Flask应用
-├── templates/            # HTML模板
-└── static/               # 静态资源
+├── functions/
+│   └── [[path]].py        # 核心路由处理逻辑
+├── static/                # 静态资源（CSS、JS、图片等）
+├── templates/             # HTML模板（可选）
+├── requirements.txt       # Python依赖（仅基础依赖）
+├── deploy.bat            # Windows部署脚本
+├── deploy.ps1            # PowerShell部署脚本
+└── README.md             # 项目说明文档
 ```
 
-## 技术说明
+## 部署步骤
 
-1. **Python WSGI适配器**：使用Cloudflare官方的@cloudflare/flask-adapter和@cloudflare/python-wasm
-2. **数据库**：SQLite已替换为Cloudflare D1（兼容SQL语法）
-3. **兼容标志**：启用python_wasm兼容标志以支持Python Wasm运行时
-4. **会话管理**：建议使用Cloudflare KV存储（需在wrangler.toml中配置）
+### 方法一：使用自动部署脚本
 
-## 注意事项
+#### Windows用户
 
-1. Cloudflare Workers有执行时间限制，复杂查询可能需要优化
-2. 文件上传功能需要使用Cloudflare R2存储
-3. 确保在wrangler.toml中正确配置D1数据库ID
-4. 如果使用会话管理，需要创建KV存储并配置ID
+1. 双击运行 `deploy.bat`
+2. 按照提示操作
+3. 脚本会自动将代码推送到GitHub
+4. 在Cloudflare控制台完成最后配置
+
+#### PowerShell用户
+
+1. 在PowerShell中运行 `.\deploy.ps1`
+2. 按照提示操作
+3. 脚本会自动将代码推送到GitHub
+4. 在Cloudflare控制台完成最后配置
+
+### 方法二：手动部署
+
+1. **创建GitHub仓库**
+
+   ```bash
+   git init
+   git add .
+   git commit -m "初始提交"
+   git branch -M main
+   git remote add origin https://github.com/yourusername/yourrepo.git
+   git push -u origin main
+   ```
+
+2. **创建Cloudflare Pages项目**
+
+   - 登录Cloudflare控制台: https://dash.cloudflare.com/
+   - 进入"Pages"部分
+   - 点击"创建项目"
+   - 连接到您的GitHub仓库
+   - 在"构建设置"中配置：
+     - 构建命令：留空（无需安装依赖）
+     - 构建输出目录：/（根目录）
+     - 框架预设：No Framework
+
+3. **部署项目**
+
+   - 点击"保存并部署"
+   - 等待部署完成
+
+## 配置Cloudflare Pages
+
+在项目设置中，确保以下配置正确：
+
+1. **构建与部署**
+   - 构建命令：留空
+   - 构建输出目录：/
+   - 环境变量：根据需要添加
+
+2. **自定义域（可选）**
+   - 在"自定义域"中添加您的域名
+   - 按照提示配置DNS记录
+
+## 功能说明
+
+### 路由处理
+
+项目中的`functions/[[path]].py`文件处理所有HTTP请求，支持以下路由：
+
+- `/` - 博客首页
+- `/api/user?name=xxx` - 用户API
+- `/post/xxx` - 文章详情页
+- `/about` - 关于页面
+- `/contact` - 联系页面
+- `/categories` - 分类页面
+- `/login` - 登录处理（POST）
+- `/register` - 注册处理（POST）
+
+### 请求处理
+
+所有请求都通过`on_request(context)`函数处理，其中：
+
+- `context.request` - 包含请求信息
+- `request.url.path` - 请求路径
+- `request.method` - HTTP方法
+- `request.url.search_params` - URL查询参数
+
+### 响应格式
+
+使用自定义的`Response`类返回响应：
+
+```python
+return Response(
+    body="响应内容",
+    status=200,
+    headers={"Content-Type": "text/html"}
+)
+```
+
+## 数据存储选项
+
+### 简单键值存储
+
+使用Cloudflare KV存储简单数据：
+
+1. 在Cloudflare控制台创建KV命名空间
+2. 在Pages项目中绑定KV命名空间
+3. 在代码中通过`context.env.KV_NAMESPACE`访问
+
+### 结构化数据
+
+使用Cloudflare D1存储结构化数据：
+
+1. 在Cloudflare控制台创建D1数据库
+2. 在Pages项目中绑定D1数据库
+3. 在代码中通过`context.env.DB`访问
+
+## 本地开发
+
+虽然Cloudflare Pages主要用于生产环境，但您可以通过以下方式进行本地开发：
+
+1. 使用Python内置服务器模拟请求处理
+2. 创建简单的测试脚本验证路由逻辑
+3. 使用Cloudflare Wrangler进行本地测试
 
 ## 故障排除
 
-1. 如果遇到依赖问题，请确保使用Python 3.9+
-2. 如果部署失败，检查wrangler.toml配置是否正确
-3. 如果数据库连接失败，确认D1数据库ID是否正确
-4. 如果Python Wasm运行时错误，确保启用了python_wasm兼容标志
+### 常见问题
 
-## 自定义域名
+1. **部署失败**
+   - 检查functions目录结构是否正确
+   - 确认[[path]].py文件语法无误
+   - 查看部署日志获取详细错误信息
 
-1. 在Cloudflare控制台中进入"Workers & Pages"
-2. 选择您的项目
-3. 进入"Triggers" > "Custom Domains"
-4. 添加您的自定义域名
+2. **路由不工作**
+   - 确认路径匹配逻辑正确
+   - 检查HTTP方法是否匹配
+   - 验证参数解析是否正确
 
-## 性能优化建议
+3. **性能问题**
+   - 优化路由处理逻辑
+   - 减少不必要的计算
+   - 考虑使用缓存策略
 
-1. 使用Cloudflare KV存储缓存常用数据
-2. 优化数据库查询，避免复杂JOIN
-3. 使用Cloudflare CDN加速静态资源
-4. 考虑使用Cloudflare R2存储大文件
+### 调试技巧
+
+1. 使用`context.request`对象检查请求详情
+2. 在响应中添加调试信息
+3. 查看Cloudflare Analytics了解访问情况
+
+## 扩展功能
+
+### 添加新路由
+
+在`functions/[[path]].py`的`on_request`函数中添加新的路由条件：
+
+```python
+elif path == "/new-route":
+    return Response("新路由内容", status=200)
+```
+
+### 处理表单数据
+
+对于POST请求，可以通过以下方式获取表单数据：
+
+```python
+elif path == "/submit" and method == "POST":
+    # 处理表单提交
+    return Response("提交成功", status=200)
+```
+
+### 使用模板
+
+虽然本项目不依赖Flask，但您仍然可以使用简单的模板系统：
+
+```python
+def render_template(template_name, context={}):
+    # 简单的模板渲染逻辑
+    with open(f"templates/{template_name}", "r") as f:
+        template = f.read()
+    
+    # 简单的变量替换
+    for key, value in context.items():
+        template = template.replace(f"{{{{ {key} }}}}", str(value))
+    
+    return template
+```
+
+## 性能优化
+
+1. **减少计算复杂度**
+   - 避免在请求处理中进行复杂计算
+   - 考虑预计算常用数据
+
+2. **使用缓存**
+   - 对不常变化的内容使用缓存
+   - 考虑使用Cloudflare KV存储缓存数据
+
+3. **优化响应大小**
+   - 压缩响应内容
+   - 只返回必要的数据
+
+## 安全注意事项
+
+1. **输入验证**
+   - 对所有用户输入进行验证
+   - 防止注入攻击
+
+2. **敏感信息**
+   - 不要在代码中硬编码敏感信息
+   - 使用环境变量存储密钥
+
+3. **访问控制**
+   - 实现适当的身份验证和授权
+   - 限制对敏感功能的访问
+
+## 许可证
+
+本项目采用MIT许可证，详情请参阅LICENSE文件。
+
+## 贡献
+
+欢迎提交Issue和Pull Request来改进这个项目。
+
+## 支持
+
+如果您在使用过程中遇到问题，请：
+
+1. 查看本文档的故障排除部分
+2. 搜索已有的Issues
+3. 创建新的Issue描述您的问题
+
+---
+
+**注意**: 本项目已针对Cloudflare Pages原生Python Functions进行了优化，不再依赖Flask框架或复杂的数据库系统。如果您需要更复杂的功能，可以考虑使用Cloudflare D1或KV存储来扩展项目功能。
