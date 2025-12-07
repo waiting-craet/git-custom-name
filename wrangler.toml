@@ -1,5 +1,29 @@
 name = "little-gao"
-compatibility_date = "2023-12-01"
+compatibility_date = "2023-12-07"
+compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-pages_build_output_dir = "public"
+name = "little-gao-prod"
+
+[env.development]
+name = "little-gao-dev"
+
+# 配置D1数据库
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "little-gao-db"
+database_id = ""
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "little-gao-db-dev"
+database_id = ""
+
+# 配置KV存储（用于会话管理）
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = ""
+
+[[env.development.kv_namespaces]]
+binding = "SESSIONS"
+id = ""

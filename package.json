@@ -1,0 +1,17 @@
+{
+  "name": "little-gao",
+  "version": "1.0.0",
+  "description": "Flask博客应用部署到Cloudflare Workers",
+  "main": "functions/_middleware.js",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public",
+    "tail": "wrangler pages tail"
+  },
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "~0.3.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

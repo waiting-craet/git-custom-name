@@ -1,11 +1,12 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
+# 使用Cloudflare D1数据库连接字符串
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -394,6 +395,18 @@ with app.app_context():
             )
             db.session.add_all([post1, post2])
             db.session.commit()
+
+# 添加Cloudflare Workers导出代码
+try:
+    from flask_workers import export
+    export(
+        app,
+        output_file="worker.js",
+        static_dir="static",
+        templates_dir="templates"
+    )
+except ImportError:
+    print("flask-workers not available, skipping export")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5009)
