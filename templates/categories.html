@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-6"><i class="category-icon">📚</i> 文章分类</h2>
+    
+    <div class="categories-grid">
+        {% for category in categories %}
+        <div class="category-card">
+            <div class="card-emoji">
+                {% if category.name == '技术' or category.name == '编程' %}
+                    💻
+                {% elif category.name == '生活' or category.name == '日常' %}
+                    🏠
+                {% elif category.name == '学习' or category.name == '教育' %}
+                    📝
+                {% elif category.name == '工作' or category.name == '职场' %}
+                    💼
+                {% else %}
+                    📌
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">{{ category.name }}</h3>
+                <p class="card-count">{{ category.posts|length }} 篇文章</p>
+                <a href="{{ url_for('category_posts', category_id=category.id) }}" class="btn-primary">
+                    查看文章
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if categories|length == 0 %}
+    <div class="empty-state">
+        <div class="empty-emoji">📭</div>
+        <p class="empty-text">暂无分类，请稍后再试。</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* 全局样式重置 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* 标题样式 */
+.text-center {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 2.5rem;
+}
+
+.category-icon {
+    margin-right: 10px;
+    font-size: 1.5rem;
+}
+
+/* 分类网格布局 */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    justify-items: center;
+    padding: 0 1rem;
+}
+
+/* 分类卡片样式 */
+.category-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 320px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: visible;
+}
+
+.category-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+/* 卡片emoji样式 */
+.card-emoji {
+    font-size: 3.5rem;
+    text-align: center;
+    margin-top: -30px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover .card-emoji {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* 卡片内容样式 */
+.card-body {
+    padding: 1.5rem;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 0.75rem;
+}
+
+.card-count {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-top: auto;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+.empty-emoji {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.empty-text {
+    font-size: 1.1rem;
+    color: #6c757d;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1.75rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .category-card {
+        max-width: 280px;
+    }
+    
+    .card-emoji {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .text-center {
+        font-size: 1.75rem;
+    }
+    
+    .categories-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+        padding: 0 0.75rem;
+    }
+    
+    .card-emoji {
+        font-size: 2.75rem;
+        margin-top: -25px;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-title {
+        font-size: 1.35rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .text-center {
+        font-size: 1.5rem;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+    
+    .category-card {
+        max-width: 100%;
+    }
+    
+    .card-emoji {
+        font-size: 3rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    
+    .empty-emoji {
+        font-size: 3.5rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .text-center {
+        font-size: 1.4rem;
+        margin-bottom: 2rem;
+    }
+    
+    .card-emoji {
+        font-size: 2.5rem;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+    }
+    
+    .btn-primary {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* 容器样式 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* 加载动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.category-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 交错动画效果 */
+.category-card:nth-child(2n) {
+    animation-delay: 0.1s;
+}
+
+.category-card:nth-child(3n) {
+    animation-delay: 0.2s;
+}
+
+.category-card:nth-child(4n) {
+    animation-delay: 0.3s;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}登录{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="auth-form-container">
+            <div class="card">
+                <h1 class="auth-title">用户登录</h1>
+                <form id="login-form" method="POST" action="{{ url_for('login') }}">
+                    <div class="form-group">
+                        <label for="username_or_email" class="form-label">用户名/邮箱 *</label>
+                        <input type="text" id="username_or_email" name="username_or_email" class="form-control" placeholder="请输入用户名或邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">密码 *</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" name="password" class="form-control password-input" placeholder="请输入密码" required>
+                            <button type="button" class="toggle-password" title="显示/隐藏密码">
+                                &#128065;
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">登录</button>
+                    </div>
+                    <div class="auth-footer">
+                        <span>还没有账号？<a href="{{ url_for('register') }}" class="register-link">立即注册</a></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .auth-form-container {
+            max-width: 500px;
+            margin: 50px auto;
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+        }
+        
+        .password-input {
+            padding-right: 40px;
+            flex: 1;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+        
+        .toggle-password:hover {
+            color: #4CAF50;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .register-link {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .register-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 密码显示/隐藏切换
+            const togglePassword = document.querySelector('.toggle-password');
+            const passwordInput = document.querySelector('.password-input');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+            });
+            
+            // 表单验证
+            const loginForm = document.getElementById('login-form');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                
+                // 验证用户名/邮箱
+                const usernameOrEmail = document.getElementById('username_or_email');
+                if (!usernameOrEmail.value.trim()) {
+                    isValid = false;
+                    usernameOrEmail.classList.add('error');
+                    let errorElement = usernameOrEmail.nextElementSibling;
+                    if (!errorElement || !errorElement.classList.contains('form-error')) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'form-error';
+                        usernameOrEmail.parentNode.appendChild(errorElement);
+                    }
+                    errorElement.textContent = '此字段不能为空';
+                } else {
+                    usernameOrEmail.classList.remove('error');
+                    let errorElement = usernameOrEmail.nextElementSibling;
+                    if (errorElement && errorElement.classList.contains('form-error')) {
+                        errorElement.remove();
+                    }
+                }
+                
+                // 验证密码
+                const password = document.getElementById('password');
+                if (!password.value.trim()) {
+                    isValid = false;
+                    password.classList.add('error');
+                    let errorElement = password.parentNode.nextElementSibling;
+                    if (!errorElement || !errorElement.classList.contains('form-error')) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'form-error';
+                        password.parentNode.parentNode.appendChild(errorElement);
+                    }
+                    errorElement.textContent = '此字段不能为空';
+                } else {
+                    password.classList.remove('error');
+                    let errorElement = password.parentNode.nextElementSibling;
+                    if (errorElement && errorElement.classList.contains('form-error')) {
+                        errorElement.remove();
+                    }
+                }
+                
+                if (isValid) {
+                    const submitBtn = this.querySelector('[type="submit"]');
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                    
+                    // 提交表单
+                    this.submit();
+                }
+            });
+            
+            // 输入时移除错误提示
+            const inputs = loginForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    let errorElement;
+                    if (this.id === 'password') {
+                        errorElement = this.parentNode.nextElementSibling;
+                    } else {
+                        errorElement = this.nextElementSibling;
+                    }
+                    if (errorElement && errorElement.classList.contains('form-error')) {
+                        errorElement.remove();
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

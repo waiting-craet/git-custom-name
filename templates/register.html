@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}注册{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="auth-form-container">
+            <div class="card">
+                <h1 class="auth-title">用户注册</h1>
+                <form id="register-form" method="POST" action="{{ url_for('register') }}">
+                    <div class="form-group">
+                        <label for="username" class="form-label">用户名 *</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label">邮箱 *</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="请输入邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">密码 *</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" name="password" class="form-control password-input" placeholder="请输入密码（至少6位）" required>
+                            <button type="button" class="toggle-password" title="显示/隐藏密码">
+                                &#128065;
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password" class="form-label">确认密码 *</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control password-input" placeholder="请再次输入密码" required>
+                            <button type="button" class="toggle-password" title="显示/隐藏密码">
+                                &#128065;
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">注册</button>
+                    </div>
+                    <div class="auth-footer">
+                        <span>已有账号？<a href="{{ url_for('login') }}" class="login-link">立即登录</a></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .auth-form-container {
+            max-width: 500px;
+            margin: 50px auto;
+        }
+        
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+        }
+        
+        .password-input {
+            padding-right: 40px;
+            flex: 1;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+        
+        .toggle-password:hover {
+            color: #4CAF50;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .login-link {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .login-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 密码显示/隐藏切换
+            const togglePasswordButtons = document.querySelectorAll('.toggle-password');
+            togglePasswordButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const passwordInput = this.previousElementSibling;
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+                });
+            });
+            
+            // 表单验证
+            const registerForm = document.getElementById('register-form');
+            
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                
+                // 验证用户名
+                const username = document.getElementById('username');
+                if (!username.value.trim()) {
+                    isValid = false;
+                    showError(username, '此字段不能为空');
+                } else {
+                    removeError(username);
+                }
+                
+                // 验证邮箱
+                const email = document.getElementById('email');
+                if (!email.value.trim()) {
+                    isValid = false;
+                    showError(email, '此字段不能为空');
+                } else if (!validateEmail(email.value)) {
+                    isValid = false;
+                    showError(email, '请输入正确邮箱格式');
+                } else {
+                    removeError(email);
+                }
+                
+                // 验证密码
+                const password = document.getElementById('password');
+                if (!password.value.trim()) {
+                    isValid = false;
+                    showError(password, '此字段不能为空');
+                } else if (password.value.length < 6) {
+                    isValid = false;
+                    showError(password, '密码长度至少6位');
+                } else {
+                    removeError(password);
+                }
+                
+                // 验证确认密码
+                const confirmPassword = document.getElementById('confirm_password');
+                if (!confirmPassword.value.trim()) {
+                    isValid = false;
+                    showError(confirmPassword, '此字段不能为空');
+                } else if (confirmPassword.value !== password.value) {
+                    isValid = false;
+                    showError(confirmPassword, '两次密码输入不一致');
+                } else {
+                    removeError(confirmPassword);
+                }
+                
+                if (isValid) {
+                    const submitBtn = this.querySelector('[type="submit"]');
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                    
+                    // 提交表单
+                    this.submit();
+                }
+            });
+            
+            // 输入时移除错误提示
+            const inputs = registerForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    let errorElement;
+                    if (this.id === 'password' || this.id === 'confirm_password') {
+                        errorElement = this.parentNode.nextElementSibling;
+                    } else {
+                        errorElement = this.nextElementSibling;
+                    }
+                    if (errorElement && errorElement.classList.contains('form-error')) {
+                        errorElement.remove();
+                    }
+                });
+            });
+            
+            // 邮箱验证函数
+            function validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+            
+            // 显示错误信息
+            function showError(element, message) {
+                element.classList.add('error');
+                let errorElement;
+                if (element.id === 'password' || element.id === 'confirm_password') {
+                    errorElement = element.parentNode.nextElementSibling;
+                    if (!errorElement || !errorElement.classList.contains('form-error')) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'form-error';
+                        element.parentNode.parentNode.appendChild(errorElement);
+                    }
+                } else {
+                    errorElement = element.nextElementSibling;
+                    if (!errorElement || !errorElement.classList.contains('form-error')) {
+                        errorElement = document.createElement('div');
+                        errorElement.className = 'form-error';
+                        element.parentNode.appendChild(errorElement);
+                    }
+                }
+                errorElement.textContent = message;
+            }
+            
+            // 移除错误信息
+            function removeError(element) {
+                element.classList.remove('error');
+                let errorElement;
+                if (element.id === 'password' || element.id === 'confirm_password') {
+                    errorElement = element.parentNode.nextElementSibling;
+                } else {
+                    errorElement = element.nextElementSibling;
+                }
+                if (errorElement && errorElement.classList.contains('form-error')) {
+                    errorElement.remove();
+                }
+            }
+        });
+    </script>
+{% endblock %}

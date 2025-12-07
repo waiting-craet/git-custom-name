@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="profile-header">
+            <div class="profile-info">
+                <div class="avatar">{{ current_user.username[0].upper() }}</div>
+                <h1 class="username">{{ current_user.username }}</h1>
+                <p class="email">{{ current_user.email }}</p>
+                <p class="join-date">注册时间: {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+            </div>
+        </div>
+        
+        <div class="profile-content">
+            <div class="main-content">
+                <div class="card">
+                    <h2 class="section-title">我的文章</h2>
+                    <a href="{{ url_for('add_post') }}" class="btn btn-primary add-post-btn">发布新文章</a>
+                    <
+                    {% if posts %}
+                        <div class="post-list">
+                            {% for post in posts %}
+                            <div class="post-item">
+                                <h3 class="post-title">
+                                    <a href="{{ url_for('post_detail', post_id=post.id) }}">{{ post.title }}</a>
+                                </h3>
+                                <div class="post-meta">
+                                    <span class="date">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                    <span class="category">分类: <a href="{{ url_for('category_posts', category_id=post.category.id) }}">{{ post.category.name }}</a></span>
+                                    <span class="views">浏览: {{ post.views }}</span>
+                                    <span class="comments">评论: {{ post.comments|length }}</span>
+                                </div>
+                                <div class="post-actions">
+                                    <a href="{{ url_for('edit_post', post_id=post.id) }}" class="action-btn edit">编辑</a>
+                                    <a href="{{ url_for('delete_post', post_id=post.id) }}" class="action-btn delete" onclick="return confirm('确定要删除这篇文章吗？此操作不可恢复。')">删除</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if pagination %}
+                        <div class="pagination">
+                            {% if pagination.has_prev %}
+                                <a href="?page={{ pagination.prev_num }}" class="page-link">上一页</a>
+                            {% endif %}
+                            
+                            {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                                {% if page %}
+                                    {% if page == pagination.page %}
+                                        <span class="page-link active">{{ page }}</span>
+                                    {% else %}
+                                        <a href="?page={{ page }}" class="page-link">{{ page }}</a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="page-link ellipsis">...</span>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                                <a href="?page={{ pagination.next_num }}" class="page-link">下一页</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="no-posts">
+                            <p>还没有发布任何文章，<a href="{{ url_for('add_post') }}">立即发布</a>一篇吧！</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="card stats-card">
+                    <h3 class="card-title">统计信息</h3>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-value">{{ post_count }}</span>
+                            <span class="stat-label">文章总数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ comment_count }}</span>
+                            <span class="stat-label">评论总数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ view_count }}</span>
+                            <span class="stat-label">总浏览量</span>
+                        </div>
+                    </div>
+                </div>
+                <
+                <div class="card categories-card">
+                    <h3 class="card-title">我的分类</h3>
+                    <div class="category-list">
+                        {% if user_categories %}
+                            {% for category in user_categories %}
+                            <a href="{{ url_for('category_posts', category_id=category.id) }}" class="category-item">
+                                <span class="category-name">{{ category.name }}</span>
+                                <span class="category-count">{{ category.posts|length }}</span>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-categories">还没有创建分类</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+            border-radius: 8px;
+        }
+        
+        .profile-info {
+            text-align: center;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .username {
+            font-size: 2.5rem;
+            margin: 0 0 10px;
+            font-weight: 600;
+        }
+        
+        .email {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin: 0 0 10px;
+        }
+        
+        .join-date {
+            opacity: 0.8;
+            margin: 0;
+        }
+        
+        .profile-content {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+            display: inline-block;
+        }
+        
+        .add-post-btn {
+            float: right;
+            margin-bottom: 20px;
+        }
+        
+        .post-item {
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+        }
+        
+        .post-item:last-child {
+            border-bottom: none;
+        }
+        
+        .post-title {
+            margin: 0 0 10px;
+            font-size: 1.3rem;
+        }
+        
+        .post-title a {
+            color: #333;
+            text-decoration: none;
+        }
+        
+        .post-title a:hover {
+            color: #667eea;
+        }
+        
+        .post-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+        
+        .action-btn.edit {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .action-btn.edit:hover {
+            background: #e0e0e0;
+        }
+        
+        .action-btn.delete {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .action-btn.delete:hover {
+            background: #ffcdd2;
+        }
+        
+        .no-posts {
+            text-align: center;
+            padding: 40px 0;
+            color: #666;
+        }
+        
+        .no-posts a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .stats-card {
+            margin-bottom: 30px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        
+        .category-item:hover {
+            color: #667eea;
+        }
+        
+        .category-count {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .no-categories {
+            text-align: center;
+            padding: 20px 0;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .username {
+                font-size: 2rem;
+            }
+            
+            .add-post-btn {
+                float: none;
+                display: block;
+                margin: 20px 0;
+                text-align: center;
+            }
+        }
+    </style>
+{% endblock %}

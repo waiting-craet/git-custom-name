@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_new %}发布文章{% else %}编辑文章{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="main-content">
+            <div class="card">
+                <h1 class="edit-title">{% if is_new %}发布文章{% else %}编辑文章{% endif %}</h1>
+                <form id="edit-post-form" method="POST" action="{{ url_for('add_post') if is_new else url_for('edit_post', post_id=post.id) }}">
+                    <div class="form-group">
+                        <label for="title" class="form-label">标题 *</label>
+                        <input type="text" id="title" name="title" class="form-control" placeholder="请输入文章标题" value="{{ post.title if post else '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category_id" class="form-label">分类 *</label>
+                        <select id="category_id" name="category_id" class="form-control" required>
+                            <option value="" disabled {% if not post %}selected{% endif %}>请选择分类</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if post and post.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="content" class="form-label">内容 *</label>
+                        <textarea id="content" name="content" class="form-control content-textarea" rows="15" placeholder="请输入文章内容" required>{{ post.content if post else '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tags" class="form-label">标签（可选，多个标签用逗号分隔）</label>
+                        <input type="text" id="tags" name="tags" class="form-control" placeholder="例如：Python, Flask, 编程" value="{{ tag_string if tag_string else '' }}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">{% if is_new %}发布文章{% else %}更新文章{% endif %}</button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline" onclick="return confirm('确定要取消吗？未保存的内容将丢失。')">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .edit-title {
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .content-textarea {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+        
+        .btn-outline {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+    </style>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editPostForm = document.getElementById('edit-post-form');
+            
+            editPostForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                
+                // 验证标题
+                const title = document.getElementById('title');
+                if (!title.value.trim()) {
+                    isValid = false;
+                    showError(title, '此字段不能为空');
+                } else {
+                    removeError(title);
+                }
+                
+                // 验证分类
+                const categoryId = document.getElementById('category_id');
+                if (!categoryId.value) {
+                    isValid = false;
+                    showError(categoryId, '请选择分类');
+                } else {
+                    removeError(categoryId);
+                }
+                
+                // 验证内容
+                const content = document.getElementById('content');
+                if (!content.value.trim()) {
+                    isValid = false;
+                    showError(content, '此字段不能为空');
+                } else {
+                    removeError(content);
+                }
+                
+                if (isValid) {
+                    const submitBtn = this.querySelector('[type="submit"]');
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                    
+                    // 提交表单
+                    this.submit();
+                }
+            });
+            
+            // 输入时移除错误提示
+            const inputs = editPostForm.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    removeError(this);
+                });
+                
+                // 选择框变化时移除错误提示
+                if (input.tagName === 'SELECT') {
+                    input.addEventListener('change', function() {
+                        removeError(this);
+                    });
+                }
+            });
+            
+            // 显示错误信息
+            function showError(element, message) {
+                element.classList.add('error');
+                let errorElement = element.nextElementSibling;
+                if (!errorElement || !errorElement.classList.contains('form-error')) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'form-error';
+                    element.parentNode.appendChild(errorElement);
+                }
+                errorElement.textContent = message;
+            }
+            
+            // 移除错误信息
+            function removeError(element) {
+                element.classList.remove('error');
+                let errorElement = element.nextElementSibling;
+                if (errorElement && errorElement.classList.contains('form-error')) {
+                    errorElement.remove();
+                }
+            }
+        });
+    </script>
+{% endblock %}

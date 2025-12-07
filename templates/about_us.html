@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}关于我们 - 旅途印记{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="main-content">
+            <h1 class="page-title">关于我们</h1>
+            
+            <!-- 网站介绍卡片 -->
+            <div class="about-card">
+                <div class="card-header">网站简介</div>
+                <div class="card-content">
+                    <p>欢迎来到<strong>旅途印记</strong>，一个专注于分享旅途见闻、记录生活点滴的个人博客平台。</p>
+                    <p>在这里，我们希望通过文字和图片，捕捉旅途中的美好瞬间，分享旅行中的独特体验和感悟。无论是壮丽的自然风光、多彩的人文景观，还是旅途中遇到的有趣故事，都能在这里找到共鸣。</p>
+                    <p>我们相信，每一段旅程都值得被记录，每一个故事都值得被分享。期待与你一起，探索未知，记录生活！</p>
+                </div>
+            </div>
+            
+            <!-- 网站特色卡片 -->
+            <div class="about-card">
+                <div class="card-header">网站特色</div>
+                <div class="card-content">
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">📝</div>
+                            <div class="feature-title">优质内容</div>
+                            <div class="feature-description">精心筛选的旅行见闻和生活感悟</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🌍</div>
+                            <div class="feature-title">全球足迹</div>
+                            <div class="feature-description">涵盖世界各地的旅行体验分享</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">💬</div>
+                            <div class="feature-title">互动社区</div>
+                            <div class="feature-description">友好的评论交流环境</div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📱</div>
+                            <div class="feature-title">响应式设计</div>
+                            <div class="feature-description">随时随地，尽享阅读体验</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 团队介绍卡片 -->
+            <div class="about-card">
+                <div class="card-header">团队介绍</div>
+                <div class="card-content">
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-name">旅行者小明</div>
+                            <div class="member-role">创始人</div>
+                            <div class="member-bio">热爱旅行和摄影，曾游历20多个国家，致力于分享真实的旅行体验。</div>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-name">文字控小红</div>
+                            <div class="member-role">内容编辑</div>
+                            <div class="member-bio">擅长用文字记录生活中的美好瞬间，为读者带来温暖治愈的阅读体验。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 联系信息卡片 -->
+            <div class="about-card">
+                <div class="card-header">联系我们</div>
+                <div class="card-content">
+                    <p>如果你对网站有任何建议或想与我们合作，欢迎通过以下方式联系我们：</p>
+                    <div class="contact-info">
+                        <p><strong>邮箱：</strong>contact@lvyinji.com</p>
+                        <p><strong>微信：</strong>lvyinji2023</p>
+                        <p><strong>微博：</strong>@旅途印记官方</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <aside class="sidebar">
+            <!-- 侧边栏内容 -->
+            <div class="card">
+                <div class="card-header">快速链接</div>
+                <div class="quick-links">
+                    <a href="{{ url_for('index') }}" class="link-item">首页</a>
+                    <a href="#" class="link-item">联系我们</a>
+                    <a href="#" class="link-item">文章分类</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">关注我们</div>
+                <div class="social-links">
+                    <a href="#" class="social-item">微信</a>
+                    <a href="#" class="social-item">微博</a>
+                    <a href="#" class="social-item">知乎</a>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    {% block extra_css %}
+    <style>
+        .page-title {
+            font-size: 2.2rem;
+            color: #1a5276;
+            margin-bottom: 30px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eaf2f8;
+        }
+        
+        .about-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .about-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            background-color: #1a5276;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .card-content {
+            padding: 25px;
+        }
+        
+        .card-content p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-3px);
+            background-color: #eaf2f8;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #1a5276;
+        }
+        
+        .feature-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .team-member {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .team-member::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background-color: #f4d03f;
+        }
+        
+        .member-name {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #1a5276;
+            margin-bottom: 5px;
+        }
+        
+        .member-role {
+            font-size: 0.9rem;
+            color: #f4d03f;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .member-bio {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .contact-info p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .contact-info strong {
+            color: #1a5276;
+        }
+        
+        .quick-links {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .link-item {
+            display: block;
+            padding: 10px 15px;
+            color: #666;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+        }
+        
+        .link-item:hover {
+            background-color: #f8f9fa;
+            color: #1a5276;
+            padding-left: 20px;
+        }
+        
+        .social-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        
+        .social-item {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px;
+            text-align: center;
+            background-color: #f4d03f;
+            color: #1a5276;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .social-item:hover {
+            background-color: #f1c40f;
+            transform: translateY(-2px);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.8rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-content {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .card-header {
+                font-size: 1.1rem;
+            }
+            
+            .feature-icon {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    {% endblock %}
+{% endblock %}
