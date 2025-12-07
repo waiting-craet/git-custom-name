@@ -1,0 +1,24 @@
+name = "flask-blog"
+compatibility_date = "2025-12-07"
+compatibility_flags = ["python_workers"]
+
+[env.production]
+name = "flask-blog-prod"
+
+[[env.production.vars]]
+PYTHON_VERSION = "3.10"
+
+[env.development]
+name = "flask-blog-dev"
+
+[[env.development.vars]]
+PYTHON_VERSION = "3.10"
+
+# 配置静态文件
+[site]
+bucket = "./static"
+entry-point = "index.py"
+
+# 配置 Python 环境
+[build]
+command = "pip install -r requirements.txt"

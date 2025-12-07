@@ -5,8 +5,19 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+
+# 根据环境配置数据库
+if os.environ.get('CLOUDFLARE_ENV') == 'production':
+    # Cloudflare Pages 生产环境
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+    # 在生产环境中，应该使用 Cloudflare D1 或其他云数据库
+    # 这里暂时使用 SQLite，但实际部署时需要更改
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///blog.db')
+else:
+    # 本地开发环境
+    app.config['SECRET_KEY'] = 'your-secret-key-here'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初始化数据库
