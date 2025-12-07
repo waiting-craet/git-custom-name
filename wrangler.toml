@@ -1,0 +1,8 @@
+name = "little-gao"
+compatibility_date = "2023-12-01"
+
+[env.production]
+pages_build_output_dir = "public"
+
+[[env.production.pages_build_output]]
+entry-point = "functions"
