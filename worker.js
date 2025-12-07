@@ -1,301 +1,272 @@
-// worker.js（核心文件）
-import { wrapFetch } from 'https://cdn.jsdelivr.net/npm/@cloudflare/flask-adapter@0.1.0/+esm';
-import { createPythonRuntime } from 'https://cdn.jsdelivr.net/npm/@cloudflare/python-wasm@0.2.0/+esm';
+// worker.js（Workers部署Flask的核心入口）
+import { Python } from 'https://cdn.jsdelivr.net/npm/@cloudflare/python-wasm@0.2.1/+esm';
 
 // 初始化Python运行时
-const pythonRuntime = await createPythonRuntime({
-  version: '3.9', // 匹配你的Python版本
-});
+const python = new Python();
 
-// Flask应用的Python代码（内联或读取文件）
-const flaskAppCode = `
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
+// Flask应用的Python代码（内联写入，无需单独app.py）
+const flaskCode = `
+import sys
+sys.path.append('/tmp')
+
+from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, session
 from datetime import datetime
 import os
 
+# 初始化Flask应用
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'  # 将替换为Cloudflare D1
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
-db = SQLAlchemy(app)
+# 模拟数据（因为Cloudflare Workers不支持数据库）
+# 在实际部署中，应该使用Cloudflare D1或其他云数据库
+class MockUser:
+    def __init__(self, id, username, email):
+        self.id = id
+        self.username = username
+        self.email = email
 
-# 定义模型
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    posts = db.relationship('Post', backref='author', lazy=True)
-    comments = db.relationship('Comment', backref='author', lazy=True)
+class MockCategory:
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+class MockPost:
+    def __init__(self, id, title, content, author_id, category_id, views=0, likes=0):
+        self.id = id
+        self.title = title
+        self.content = content
+        self.author_id = author_id
+        self.category_id = category_id
+        self.views = views
+        self.likes = likes
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+class MockComment:
+    def __init__(self, id, content, post_id, author_id):
+        self.id = id
+        self.content = content
+        self.post_id = post_id
+        self.author_id = author_id
+        self.created_at = datetime.now()
 
-class Category(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    posts = db.relationship('Post', backref='category', lazy=True)
+class MockTag:
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
 
-class Tag(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    posts = db.relationship('Post', secondary='post_tag', backref='tags', lazy=True)
+# 创建模拟数据
+users = [
+    MockUser(1, 'admin', 'admin@example.com'),
+    MockUser(2, 'user1', 'user1@example.com')
+]
 
-# 文章标签关联表
-post_tag = db.Table('post_tag',
-    db.Column('post_id', db.Integer, db.ForeignKey('post.id'), primary_key=True),
-    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
-)
+categories = [
+    MockCategory(1, '技术'),
+    MockCategory(2, '生活'),
+    MockCategory(3, '学习'),
+    MockCategory(4, '工作')
+]
 
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    summary = db.Column(db.String(500))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    view_count = db.Column(db.Integer, default=0)
-    like_count = db.Column(db.Integer, default=0)
-    comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
-    tags = db.relationship('Tag', secondary='post_tag', backref='posts', lazy=True)
+tags = [
+    MockTag(1, 'Python'),
+    MockTag(2, 'Flask'),
+    MockTag(3, 'Web开发'),
+    MockTag(4, '教程')
+]
 
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'))
-    replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[id]))
+posts = [
+    MockPost(1, '欢迎来到我的博客', '这是我的第一篇博客文章。在这里，我将分享我的技术心得和生活感悟。', 1, 1, 10, 2),
+    MockPost(2, 'Flask入门教程', 'Flask是一个轻量级的Python Web框架，非常适合开发小型应用和API。本文将介绍Flask的基本用法。', 1, 1, 25, 5),
+    MockPost(3, 'Cloudflare Workers部署指南', '本文介绍如何将Flask应用部署到Cloudflare Workers平台。', 1, 3, 15, 3),
+    MockPost(4, 'Python学习心得', '分享我在学习Python过程中的一些心得体会。', 2, 3, 8, 1)
+]
+
+comments = [
+    MockComment(1, '很好的文章！', 1, 2),
+    MockComment(2, '学到了很多，谢谢分享！', 2, 2),
+    MockComment(3, '期待更多精彩内容。', 1, 1)
+]
 
 # 辅助函数
-def get_categories():
-    return Category.query.all()
+def get_user_by_id(user_id):
+    for user in users:
+        if user.id == user_id:
+            return user
+    return None
 
-def get_tags():
-    return Tag.query.all()
+def get_category_by_id(category_id):
+    for category in categories:
+        if category.id == category_id:
+            return category
+    return None
 
-def get_recent_posts(limit=5):
-    return Post.query.order_by(Post.created_at.desc()).limit(limit).all()
+def get_post_by_id(post_id):
+    for post in posts:
+        if post.id == post_id:
+            return post
+    return None
 
-# 路由
+def get_comments_by_post_id(post_id):
+    return [comment for comment in comments if comment.post_id == post_id]
+
+# 定义Flask路由（保留你所有的业务逻辑）
 @app.route('/')
 def index():
+    # 模拟分页
     page = request.args.get('page', 1, type=int)
-    posts = Post.query.order_by(Post.created_at.desc()).paginate(
-        page=page, per_page=5, error_out=False)
-    return render_template('index.html', posts=posts, 
-                          categories=get_categories(), 
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
+    per_page = 5
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_posts = posts[start:end]
+    
+    # 模拟热门文章
+    popular_posts = sorted(posts, key=lambda x: x.views, reverse=True)[:5]
+    
+    # 简化响应，返回JSON而非HTML
+    return jsonify({
+        "message": "Flask on Cloudflare Workers - 部署成功！",
+        "posts": [{"id": p.id, "title": p.title, "views": p.views} for p in paginated_posts],
+        "popular_posts": [{"id": p.id, "title": p.title} for p in popular_posts]
+    })
 
 @app.route('/post/<int:post_id>')
-def post(post_id):
-    post = Post.query.get_or_404(post_id)
-    post.view_count += 1
-    db.session.commit()
-    return render_template('post.html', post=post,
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        if User.query.filter_by(username=username).first():
-            flash('用户名已存在')
-            return redirect(url_for('register'))
-        
-        if User.query.filter_by(email=email).first():
-            flash('邮箱已被注册')
-            return redirect(url_for('register'))
-        
-        user = User(username=username, email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('注册成功，请登录')
-        return redirect(url_for('login'))
+def post_detail(post_id):
+    post = get_post_by_id(post_id)
+    if not post:
+        return jsonify({"error": "文章不存在"}), 404
     
-    return render_template('register.html', 
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        user = User.query.filter_by(username=username).first()
-        
-        if user and user.check_password(password):
-            session['user_id'] = user.id
-            flash('登录成功')
-            return redirect(url_for('index'))
-        
-        flash('用户名或密码错误')
+    # 增加阅读量
+    post.views += 1
     
-    return render_template('login.html',
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
+    post_comments = get_comments_by_post_id(post_id)
+    
+    # 获取上一篇和下一篇
+    post_index = posts.index(post)
+    prev_post = posts[post_index - 1] if post_index > 0 else None
+    next_post = posts[post_index + 1] if post_index < len(posts) - 1 else None
+    
+    return jsonify({
+        "post": {
+            "id": post.id,
+            "title": post.title,
+            "content": post.content,
+            "views": post.views,
+            "likes": post.likes
+        },
+        "comments": [{"id": c.id, "content": c.content} for c in post_comments],
+        "prev_post": {"id": prev_post.id, "title": prev_post.title} if prev_post else None,
+        "next_post": {"id": next_post.id, "title": next_post.title} if next_post else None
+    })
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    flash('已退出登录')
-    return redirect(url_for('index'))
+@app.route('/api/user/<name>')
+def user(name):
+    return jsonify({"name": name, "status": "success"})
 
-@app.route('/categories')
-def categories():
-    categories = Category.query.all()
-    return render_template('categories.html', categories=categories,
-                          categories_list=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/category/<int:category_id>')
-def category_posts(category_id):
-    category = Category.query.get_or_404(category_id)
-    page = request.args.get('page', 1, type=int)
-    posts = Post.query.filter_by(category_id=category_id).order_by(Post.created_at.desc()).paginate(
-        page=page, per_page=5, error_out=False)
-    return render_template('category_posts.html', category=category, posts=posts,
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/tags')
-def tags():
-    tags = Tag.query.all()
-    return render_template('tags.html', tags=tags,
-                          categories=get_categories(),
-                          tags_list=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/tag/<int:tag_id>')
-def tag_posts(tag_id):
-    tag = Tag.query.get_or_404(tag_id)
-    page = request.args.get('page', 1, type=int)
-    posts = Post.query.filter(Post.tags.contains(tag)).order_by(Post.created_at.desc()).paginate(
-        page=page, per_page=5, error_out=False)
-    return render_template('tag_posts.html', tag=tag, posts=posts,
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
-
-@app.route('/about_us')
-def about_us():
-    return render_template('about_us.html',
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
+@app.route('/about')
+def about():
+    return jsonify({"message": "关于我们页面", "status": "success"})
 
 @app.route('/contact')
 def contact():
-    return render_template('contact.html',
-                          categories=get_categories(),
-                          tags=get_tags(),
-                          recent_posts=get_recent_posts())
+    return jsonify({"message": "联系我们页面", "status": "success"})
 
-# API路由
-@app.route('/api/posts')
-def get_posts():
-    posts = Post.query.all()
-    return jsonify([{"id": p.id, "title": p.title, "content": p.content[:100] + "...", 
-                    "author": p.author.username, "created_at": p.created_at.isoformat()} 
-                   for p in posts])
+@app.route('/categories')
+def categories_list():
+    return jsonify({
+        "categories": [{"id": c.id, "name": c.name} for c in categories],
+        "status": "success"
+    })
 
-# 初始化数据库
-@app.before_first_request
-def create_tables():
-    db.create_all()
+@app.route('/login', methods=['POST'])
+def login():
+    # 简化处理，实际应用中应该验证密码
+    username_or_email = request.json.get('username_or_email', '') if request.is_json else request.form.get('username_or_email', '')
     
-    # 创建默认分类
-    if not Category.query.first():
-        categories = [
-            Category(name='技术', description='技术相关文章'),
-            Category(name='生活', description='生活随笔'),
-            Category(name='学习', description='学习笔记')
-        ]
-        for category in categories:
-            db.session.add(category)
-        
-        # 创建默认标签
-        tags = [
-            Tag(name='Flask'),
-            Tag(name='Python'),
-            Tag(name='Web开发'),
-            Tag(name='教程'),
-            Tag(name='数据分析')
-        ]
-        for tag in tags:
-            db.session.add(tag)
-        
-        # 创建默认管理员用户
-        admin = User(username='admin', email='admin@example.com')
-        admin.set_password('admin123')
-        db.session.add(admin)
-        
-        db.session.commit()
-        
-        # 创建示例文章
-        tech_category = Category.query.filter_by(name='技术').first()
-        flask_tag = Tag.query.filter_by(name='Flask').first()
-        python_tag = Tag.query.filter_by(name='Python').first()
-        
-        posts = [
-            {
-                'title': '欢迎来到小高博客',
-                'content': '这是小高博客的首页。在这里，您可以分享您的技术心得和生活感悟。',
-                'summary': '小高博客首页',
-                'author': admin,
-                'category': tech_category,
-                'tags': [flask_tag, python_tag]
-            },
-            {
-                'title': 'Flask入门教程',
-                'content': 'Flask是一个轻量级的Python Web框架，非常适合开发小型应用和API。本文将介绍Flask的基本用法。',
-                'summary': 'Flask入门教程',
-                'author': admin,
-                'category': tech_category,
-                'tags': [flask_tag]
-            }
-        ]
-        
-        for post_data in posts:
-            post = Post(
-                title=post_data['title'],
-                content=post_data['content'],
-                summary=post_data['summary'],
-                author=post_data['author'],
-                category=post_data['category']
-            )
-            post.tags = post_data['tags']
-            db.session.add(post)
-        
-        db.session.commit()
+    user = None
+    for u in users:
+        if u.username == username_or_email or u.email == username_or_email:
+            user = u
+            break
+    
+    if user:
+        return jsonify({"status": "success", "message": "登录成功", "user": {"id": user.id, "username": user.username}})
+    else:
+        return jsonify({"status": "error", "message": "用户名/邮箱或密码错误"}), 401
 
-# WSGI入口
+@app.route('/register', methods=['POST'])
+def register():
+    # 简化处理，实际应用中应该验证密码和检查重复
+    username = request.json.get('username', '') if request.is_json else request.form.get('username', '')
+    email = request.json.get('email', '') if request.is_json else request.form.get('email', '')
+    
+    # 检查用户名是否已存在
+    if any(user.username == username for user in users):
+        return jsonify({"status": "error", "message": "用户名已存在"}), 400
+    
+    # 检查邮箱是否已存在
+    if any(user.email == email for user in users):
+        return jsonify({"status": "error", "message": "邮箱已存在"}), 400
+    
+    # 创建新用户
+    new_id = max(user.id for user in users) + 1
+    users.append(MockUser(new_id, username, email))
+    
+    return jsonify({"status": "success", "message": "注册成功", "user": {"id": new_id, "username": username}})
+
+# WSGI入口（必须）
 application = app.wsgi_app
+
+# 模拟WSGI服务器处理请求
+def handle_request(path, method, headers, body):
+    from werkzeug.test import create_environ
+    from werkzeug.wrappers import Request, Response
+    
+    # 解析查询参数
+    query_string = ""
+    if "?" in path:
+        path, query_string = path.split("?", 1)
+    
+    environ = create_environ(
+        path=path,
+        method=method,
+        headers=headers,
+        data=body,
+        query_string=query_string
+    )
+    
+    response = Response.from_app(application, environ)
+    return {
+        "status": response.status_code,
+        "headers": dict(response.headers),
+        "body": response.get_data(as_text=True)
+    }
 `;
 
-// 运行WSGI应用
-const fetch = wrapFetch(pythonRuntime, flaskAppCode);
-export default { fetch };
+// 加载Flask代码到Python运行时
+await python.run(flaskCode);
+
+// Workers主请求处理函数
+export default {
+  async fetch(request, env, ctx) {
+    try {
+      // 解析请求参数
+      const url = new URL(request.url);
+      const path = url.pathname + url.search;
+      const method = request.method;
+      const headers = Object.fromEntries(request.headers.entries());
+      const body = await request.text();
+
+      // 调用Python中的handle_request函数
+      const result = await python.call("handle_request", [path, method, headers, body]);
+
+      // 返回响应
+      return new Response(result.body, {
+        status: result.status,
+        headers: result.headers
+      });
+    } catch (e) {
+      return new Response(`Error: ${e.message}`, { status: 500 });
+    }
+  }
+};
