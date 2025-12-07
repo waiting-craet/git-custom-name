@@ -6,19 +6,21 @@ compatibility_flags = ["python_workers"]
 name = "flask-blog-prod"
 
 [[env.production.vars]]
-PYTHON_VERSION = "3.10"
+PYTHON_VERSION = "3.11"
+CF_PAGES = "1"
 
 [env.development]
 name = "flask-blog-dev"
 
 [[env.development.vars]]
-PYTHON_VERSION = "3.10"
+PYTHON_VERSION = "3.11"
+CF_PAGES = "1"
 
-# 配置静态文件
+# 配置 Pages Functions
 [site]
 bucket = "./static"
-entry-point = "index.py"
+entry-point = "pages/functions"
 
-# 配置 Python 环境
+# 配置构建命令（新版本要求）
 [build]
-command = "pip install -r requirements.txt"
+command = "pip install -r requirements.txt --target .python_packages && cp -r .python_packages/* ."
