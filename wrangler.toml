@@ -1,6 +1,4 @@
-# wrangler.toml（2025年新版配置）
-name = "blog5"  # 必须和CI期望的Worker名一致（解决之前的名称不匹配警告）
-main = "worker.js"  # 入口文件
-compatibility_date = "2025-12-07"  # 当前日期
-compatibility_flags = ["js_compat", "web_socket"]  # 移除无效的python_wasm
-workers_dev = true  # 启用workers.dev域名
+name = "blog7"
+main = "worker.js"
+compatibility_date = "2025-12-07"
+workers_dev = true

@@ -1,17 +1,8 @@
 @echo off
 echo ========================================
-echo 博客项目部署脚本 - Cloudflare Workers + Python Wasm版
+echo 博客项目部署脚本 - Cloudflare Workers 纯JS版
 echo ========================================
 echo.
-
-:: 检查Git是否已安装
-git --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo 错误: 未检测到Git，请先安装Git
-    echo 下载地址: https://git-scm.com/download/win
-    pause
-    exit /b 1
-)
 
 :: 检查是否已安装Node.js
 node --version >nul 2>&1
@@ -35,20 +26,11 @@ if %errorlevel% neq 0 (
     )
 )
 
-:: 安装Python依赖
-echo 安装Python依赖...
-pip install -r requirements.txt
+:: 升级Wrangler到最新版（解决版本过时和API兼容问题）
+echo 升级Wrangler到最新版...
+npm install -g wrangler@4.53.0
 if %errorlevel% neq 0 (
-    echo Python依赖安装失败，请检查Python环境
-    pause
-    exit /b 1
-)
-
-:: 安装最新版wrangler（解决版本过时警告）
-echo 安装最新版Wrangler...
-npm install -g wrangler@4
-if %errorlevel% neq 0 (
-    echo Wrangler安装失败，请检查Node.js环境
+    echo Wrangler升级失败，请检查Node.js环境
     pause
     exit /b 1
 )
@@ -67,13 +49,13 @@ echo ========================================
 echo 部署完成！
 echo ========================================
 echo.
-echo 您的Flask应用已成功部署到Cloudflare Workers！
+echo 您的纯JS Workers应用已成功部署到Cloudflare Workers！
 echo.
-echo 访问URL将在上面的输出中显示，格式为: https://blog5-xxx.workers.dev
+echo 访问URL将在上面的输出中显示，格式为: https://blog7-xxx.workers.dev
 echo.
 echo 测试URL:
-echo - 根路径: 显示"Flask on Cloudflare Workers - 部署成功！"
-echo - /api/user/test: 返回{"name":"test","status":"success"}
-echo - /post/1: 显示文章详情
+echo - 根路径: 显示"Flask替代方案 ✅ 部署成功！"
+echo - /api/user/test: 返回{"name":"test","message":"Hello from Cloudflare Workers!","status":"success"}
+echo - /api/posts (POST请求): 返回{"received":data,"code":201}
 echo.
 pause
