@@ -1,8 +1,9 @@
+# pages/functions/[[path]].py
 from flask import Flask, request, render_template, redirect, url_for, flash, session, jsonify
 from datetime import datetime
 import os
 
-# 初始化Flask应用（无debug/port参数）
+# 初始化Flask应用
 app = Flask(__name__)
 
 # 配置
@@ -101,7 +102,7 @@ def get_post_by_id(post_id):
 def get_comments_by_post_id(post_id):
     return [comment for comment in comments if comment.post_id == post_id]
 
-# 路由
+# 根路由（必须有，解决访问/报404）
 @app.route('/')
 def index():
     # 模拟分页
@@ -294,6 +295,11 @@ def tag_posts(tag_id):
                           tags=tags, 
                           current_tag=tag)
 
+# 测试API路由
+@app.route('/api/user/<name>')
+def user(name):
+    return {"name": name, "status": "success"}, 200
+
 # 自定义过滤器
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
@@ -309,27 +315,40 @@ def inject_user():
         return dict(current_user=user, now=datetime.now())
     return dict(current_user=None, now=datetime.now())
 
-# 关键：Pages Functions入口（适配边缘运行时）
+# Pages Functions核心入口（适配边缘运行时）
 def on_request(context):
-    """Cloudflare Pages Functions的请求处理入口"""
-    # 忽略预览参数
-    path = context.request.url.path.split('?')[0]
-    
-    # 将Pages的请求对象转为Flask可识别的格式
+    """处理所有请求的入口函数"""
+    # 构造Flask请求上下文
     with app.request_context(
-        path=path,
+        path=context.request.url.path,
         method=context.request.method,
         headers=dict(context.request.headers),
-        data=context.request.body.read() if context.request.body else b''
+        data=context.request.body.read() if context.request.body else b'',
+        query_string=context.request.url.query
     ):
         try:
             # 执行Flask路由匹配
             response = app.full_dispatch_request()
-            # 返回Pages兼容的响应
-            return new Response(
+            # 返回Pages兼容的响应对象
+            return Response(
                 response.response,
                 status=response.status_code,
                 headers=dict(response.headers)
             )
         except Exception as e:
-            return new Response(f"Error: {str(e)}", status=500)
+            # 错误兜底，避免500
+            return Response(f"Error: {str(e)}", status=500)
+
+# 必须定义Response类（Pages运行时无默认Response）
+class Response:
+    def __init__(self, body, status=200, headers=None):
+        self.body = body if isinstance(body, bytes) else str(body).encode('utf-8')
+        self.status = status
+        self.headers = headers or {}
+
+    def __call__(self, environ, start_response):
+        start_response(
+            f"{self.status} OK",
+            [(k, v) for k, v in self.headers.items()]
+        )
+        return [self.body]
